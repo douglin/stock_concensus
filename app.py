@@ -55,28 +55,27 @@ if st.button("Convene the Committee"):
         model = genai.GenerativeModel(MODEL_ID)
         sp_price = data.get("S&P 500", (0,0))[0]
         
-        with st.spinner("Synthesizing board consensus..."):
+        with st.spinner("Board is in session..."):
             prompt = f"""
             Target: {user_question}
-            Context: S&P 500 is at {sp_price:,.2f}. Today's Date: {today_date}.
+            Date: {today_date} | S&P 500: {sp_price:,.2f}
             
-            Instructions: Provide a professional institutional report. 
-            STRICT LIMIT: Exactly one or two sentences per expert. Use high-density, professional language.
+            Instructions: Act as an Investment Committee. Provide a sophisticated, high-density report. 
+            FORMAT: Use 2-3 precise bullet points per agent. Avoid conversational filler or intros.
 
-            1. **The Conductor:** Summarize the primary tension for this target.
-            2. **The Macro Hawk:** Impact of current rates and $107 oil on this specific asset.
-            3. **The Value Purist:** Valuation vs. historical benchmarks and margin of safety.
-            4. **The Growth Optimist:** Long-term 2026/2027 catalysts and innovation tailwinds.
-            5. **The Risk Manager:** One specific 'Black Swan' or geopolitical risk to monitor.
-            6. **The Verdict:** Final 12-month Low/High range and a one-word Action Signal.
+            1. **The Conductor:** State the primary technical/fundamental conflict for this target.
+            2. **The Macro Hawk:** Impact of $107 oil and the current 4.3% yield environment.
+            3. **The Value Purist:** P/E multiples vs. historical 5-year averages for this asset.
+            4. **The Growth Optimist:** Specific 2026/2027 enterprise catalysts and AI integration.
+            5. **The Risk Manager:** Primary 'Black Swan' or geopolitical risk to the supply chain.
+            6. **The Verdict:** - A 12-month Price Range (Low/High).
+               - A one-sentence final justification.
+               - One-word Signal: (ACCUMULATE / NEUTRAL / TRIM).
             """
             
-            # 500 tokens is plenty for one/two-sentence responses
-            response = model.generate_content(
-                prompt,
-                generation_config=genai.types.GenerationConfig(max_output_tokens=500)
-            )
+            # We remove the 'max_tokens' restriction to let it finish its thoughts
+            response = model.generate_content(prompt)
             st.markdown("---")
             st.markdown(response.text)
     except Exception as e:
-        st.error(f"Error: {e}")
+        st.error(f"Technical Error: {e}")
