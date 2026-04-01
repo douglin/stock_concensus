@@ -55,27 +55,25 @@ if st.button("Convene the Committee"):
         model = genai.GenerativeModel(MODEL_ID)
         sp_price = data.get("S&P 500", (0,0))[0]
         
-        with st.spinner("Board is in session..."):
+        with st.spinner("Synthesizing board matrix..."):
             prompt = f"""
             Target: {user_question}
-            Date: {today_date} | S&P 500: {sp_price:,.2f}
+            Context: S&P 500 @ {sp_price:,.2f}. Date: {today_date}.
             
-            Instructions: Act as an Investment Committee. Provide a sophisticated, high-density report. 
-            FORMAT: Use 1-2 precise bullet points per agent. Avoid conversational filler or intros.
+            Instructions: Provide a high-density, 1-sentence-per-agent table. 
+            NO conversational filler. NO introductory text.
 
-            1. **The Conductor:** State the primary technical/fundamental conflict for this target.
-            2. **The Macro Hawk:** Impact of $107 oil and the current 4.3% yield environment.
-            3. **The Value Purist:** P/E multiples vs. historical 5-year averages for this asset.
-            4. **The Growth Optimist:** Specific 2026/2027 enterprise catalysts and AI integration.
-            5. **The Risk Manager:** Primary 'Black Swan' or geopolitical risk to the supply chain.
-            6. **The Verdict:** - A 12-month Price Range (Low/High).
-               - A one-sentence final justification.
-               - One-word Signal: (ACCUMULATE / NEUTRAL / TRIM).
+            1. **Macro Hawk:** Impact of $107 oil and 4.3% yields.
+            2. **Value Purist:** P/E vs. 5-year average.
+            3. **Growth Optimist:** 2026/2027 enterprise catalysts.
+            4. **Risk Manager:** Top 'Black Swan' threat.
+            5. **Conductor's Verdict:** One-sentence summary + 12m Range + (ACCUMULATE/NEUTRAL/TRIM).
             """
             
-            # We remove the 'max_tokens' restriction to let it finish its thoughts
             response = model.generate_content(prompt)
             st.markdown("---")
+            # Displaying as a Markdown Table for maximum readability
             st.markdown(response.text)
+            
     except Exception as e:
         st.error(f"Technical Error: {e}")
