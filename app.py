@@ -1,64 +1,76 @@
 import streamlit as st
 import google.generativeai as genai
+import yfinance as yf
 import os
+from datetime import datetime
+from dotenv import load_dotenv
 
-# 1. SETUP & CONFIG
-# Replace with your API Key (or use a second one if you want separate quotas!)
-GEMINI_API_KEY = "YOUR_GEMINI_API_KEY"
-genai.configure(api_key=GEMINI_API_KEY)
+# --- 1. CONFIG & SECRETS ---
+load_dotenv()
+# This line makes it work both locally (.env) and on Streamlit Cloud (Secrets)
+api_key = st.secrets.get("GEMINI_API_KEY") or os.getenv("GEMINI_API_KEY")
 
-st.set_page_config(page_title="Stock Consensus", layout="centered")
+if not api_key:
+    st.error("Missing API Key. Check Streamlit Secrets or .env file.")
+    st.stop()
 
-# Custom CSS for that clean iOS/Safari look you liked
-st.markdown("""
-    <style>
-    .reportview-container .main .block-container { padding-top: 1rem; }
-    .stButton>button { width: 100%; border-radius: 10px; height: 3em; background-color: #007AFF; color: white; }
-    .agent-box { padding: 10px; border-radius: 10px; border-left: 5px solid #007AFF; margin-bottom: 10px; background-color: #f0f2f6; }
-    </style>
-    """, unsafe_allow_html=True)
+genai.configure(api_key=api_key)
+MODEL_ID = "gemini-3-flash-preview"
+today_date = datetime.now().strftime("%B %d, %Y")
 
-st.title("📈 Stock Consensus")
-st.caption("Multi-Agent Institutional Analysis")
+st.set_page_config(page_title="Institutional Stock Advisor", layout="wide")
 
-# 2. THE INPUT
-default_query = "What is the forecast for the S&P 500?"
-user_query = st.text_input("Analysis Target:", value=default_query)
+# --- 2. LIVE DATA FEED ---
+def get_market_data():
+    tickers = {"S&P 500": "^GSPC", "Nasdaq": "^IXIC", "Brent Crude": "BZ=F"}
+    results = {}
+    for label, sym in tickers.items():
+        try:
+            t = yf.Ticker(sym)
+            hist = t.history(period="2d")
+            price = hist['Close'].iloc[-1]
+            change = ((price - hist['Close'].iloc[-2]) / hist['Close'].iloc[-2]) * 100
+            results[label] = (price, change)
+        except:
+            results[label] = (0.0, 0.0)
+    return results
 
-if st.button("Generate Consensus"):
+# --- 3. SIDEBAR: LIVE METRICS ---
+with st.sidebar:
+    st.header(f"📊 Market Snapshot")
+    st.caption(f"Last Sync: {today_date}")
+    data = get_market_data()
+    for label, (val, chg) in data.items():
+        st.metric(label, f"{val:,.2f}", f"{chg:+.2f}%")
+    
+    st.divider()
+    st.info("💡 **ATL Tip:** Markets are currently volatile due to the Iran-Israel de-escalation headlines.")
+
+# --- 4. MAIN UI ---
+st.title("🏦 Investment Committee Consensus")
+user_question = st.text_input("Ask the Board:", value="What's the forecast for the S&P 500?")
+
+if st.button("Convene the Committee"):
     try:
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel(MODEL_ID)
+        sp_price = data.get("S&P 500", (0,0))[0]
         
-        with st.spinner("Consulting the board..."):
-            # SYSTEM PROMPT: The "Stock Conductor"
-            conductor_prompt = f"""
-            You are the 'Stock Conductor'. Lead a panel of 4 institutional experts 
-            to analyze: {user_query}.
+        with st.spinner("Analyzing signals..."):
+            prompt = f"""
+            Question: {user_question}
+            Date: {today_date}
+            Context: S&P 500 is at {sp_price:,.2f}. 
             
-            Provide a response in exactly this format:
-            
-            ### 🏛️ THE PANEL SIGNALS
-            * **The Macro Hawk:** [One sentence on interest rates/inflation impact]
-            * **The Value Purist:** [One sentence on P/E ratios and fundamentals]
-            * **The Growth Optimist:** [One sentence on innovation and earnings tailwinds]
-            * **The Contrarian:** [One sentence on what the 'crowd' is missing]
-            
-            ### 📊 EXECUTIVE SUMMARY
-            [A 3-sentence synthesis of the consensus]
-            
-            ### ⚖️ STRATEGIC DECISION MATRIX
-            * **Risk Level:** [Low/Medium/High]
-            * **Horizon:** [Short/Medium/Long Term]
-            * **Final Signal:** [Accumulate/Hold/Trim/Avoid]
+            Instructions: Provide an ultra-concise institutional report for the SPECIFIC target.
+            1. **The Conductor (Lead Partner):** Frame the high-level debate.
+            2. **Macro Hawk:** Interest rates and energy impact.
+            3. **Value Purist:** Fundamentals vs. 2026 multiples.
+            4. **Growth Optimist:** AI and enterprise cloud tailwinds.
+            5. **Risk Manager:** Black Swan geopolitical threats.
+            6. **The Verdict:** 12-month Low/High and a one-word Action Signal.
             """
-            
-            response = model.generate_content(conductor_prompt)
+            response = model.generate_content(prompt)
+            st.markdown("---")
             st.markdown(response.text)
-
     except Exception as e:
-        st.error("Quota reached or connection lost.")
-        st.info("Tip: If you're using the Free Tier, consider using a separate API Key for this project to keep its quota independent from your Crypto app.")
-
-# 3. FOOTER
-st.divider()
-st.caption("Data is for educational purposes. Consult a financial advisor.")
+        st.error(f"Error: {e}")

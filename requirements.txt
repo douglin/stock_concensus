@@ -1,3 +1,7 @@
 streamlit
-requests
 google-generativeai
+python-dotenv
+yfinancestreamlit
+google-generativeai
+python-dotenv
+yfinance
