@@ -61,7 +61,7 @@ if st.button("Convene the Committee"):
             Date: {today_date} | S&P 500: {sp_price:,.2f}
             
             Instructions: Act as an Investment Committee. Provide a sophisticated, high-density report. 
-            FORMAT: Use 2-3 precise bullet points per agent. Avoid conversational filler or intros.
+            FORMAT: Use 1-2 precise bullet points per agent. Avoid conversational filler or intros.
 
             1. **The Conductor:** State the primary technical/fundamental conflict for this target.
             2. **The Macro Hawk:** Impact of $107 oil and the current 4.3% yield environment.
