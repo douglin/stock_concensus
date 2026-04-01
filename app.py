@@ -55,21 +55,27 @@ if st.button("Convene the Committee"):
         model = genai.GenerativeModel(MODEL_ID)
         sp_price = data.get("S&P 500", (0,0))[0]
         
-        with st.spinner("Analyzing signals..."):
+        with st.spinner("Synthesizing board consensus..."):
             prompt = f"""
-            Question: {user_question}
-            Date: {today_date}
-            Context: S&P 500 is at {sp_price:,.2f}. 
+            Target: {user_question}
+            Context: S&P 500 is at {sp_price:,.2f}. Today's Date: {today_date}.
             
-            Instructions: Provide an ultra-concise institutional report for the SPECIFIC target.
-            1. **The Conductor (Lead Partner):** Frame the high-level debate.
-            2. **Macro Hawk:** Interest rates and energy impact.
-            3. **Value Purist:** Fundamentals vs. 2026 multiples.
-            4. **Growth Optimist:** AI and enterprise cloud tailwinds.
-            5. **Risk Manager:** Black Swan geopolitical threats.
-            6. **The Verdict:** 12-month Low/High and a one-word Action Signal.
+            Instructions: Provide a professional institutional report. 
+            STRICT LIMIT: Exactly one or two sentences per expert. Use high-density, professional language.
+
+            1. **The Conductor:** Summarize the primary tension for this target.
+            2. **The Macro Hawk:** Impact of current rates and $107 oil on this specific asset.
+            3. **The Value Purist:** Valuation vs. historical benchmarks and margin of safety.
+            4. **The Growth Optimist:** Long-term 2026/2027 catalysts and innovation tailwinds.
+            5. **The Risk Manager:** One specific 'Black Swan' or geopolitical risk to monitor.
+            6. **The Verdict:** Final 12-month Low/High range and a one-word Action Signal.
             """
-            response = model.generate_content(prompt)
+            
+            # 500 tokens is plenty for one/two-sentence responses
+            response = model.generate_content(
+                prompt,
+                generation_config=genai.types.GenerationConfig(max_output_tokens=500)
+            )
             st.markdown("---")
             st.markdown(response.text)
     except Exception as e:
