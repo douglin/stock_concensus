@@ -55,25 +55,27 @@ if st.button("Convene the Committee"):
         model = genai.GenerativeModel(MODEL_ID)
         sp_price = data.get("S&P 500", (0,0))[0]
         
-        with st.spinner("Synthesizing board matrix..."):
+        with st.spinner("Generating Board Matrix..."):
             prompt = f"""
             Target: {user_question}
             Context: S&P 500 @ {sp_price:,.2f}. Date: {today_date}.
             
-            Instructions: Provide a high-density, 1-sentence-per-agent table. 
-            NO conversational filler. NO introductory text.
+            Instructions: Provide a high-density Markdown TABLE. 
+            STRICT: One punchy sentence per cell. NO conversational filler.
 
-            1. **Macro Hawk:** Impact of $107 oil and 4.3% yields.
-            2. **Value Purist:** P/E vs. 5-year average.
-            3. **Growth Optimist:** 2026/2027 enterprise catalysts.
-            4. **Risk Manager:** Top 'Black Swan' threat.
-            5. **Conductor's Verdict:** One-sentence summary + 12m Range + (ACCUMULATE/NEUTRAL/TRIM).
+            | Expert | Core Institutional Insight |
+            | :--- | :--- |
+            | **Macro Hawk** | Impact of $107 oil and 4.3% yields on this target. |
+            | **Value Purist** | Valuation vs. 5-year average multiples. |
+            | **Growth Optimist** | 2026/2027 enterprise/AI catalysts. |
+            | **Risk Manager** | Primary 'Black Swan' or supply chain threat. |
+            | **THE VERDICT** | [Price Range] + One-sentence summary + [SIGNAL]. |
             """
             
             response = model.generate_content(prompt)
             st.markdown("---")
-            # Displaying as a Markdown Table for maximum readability
+            # This renders a clean, professional table in Streamlit
             st.markdown(response.text)
             
     except Exception as e:
-        st.error(f"Technical Error: {e}")
+        st.error(f"Matrix Generation Error: {e}")
